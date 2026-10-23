@@ -41,7 +41,7 @@
     .back-btn { background: transparent; border: 1px solid #3b2d54; color: #a78bfa; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-bottom: 10px; align-self: flex-start; }
 
     /* Image Display Area */
-    .image-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; background: #131728; border: 1px solid #232942; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+    .image-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; background: #131728; border: 1px solid #232942; border-radius: 12px; padding: 15px; margin-bottom: 15px; min-height: 250px; }
     .image-preview img { max-width: 100%; max-height: 350px; border-radius: 8px; display: none; }
     .loader { display: none; color: #a78bfa; font-size: 14px; }
     .download-btn { display: none; margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
@@ -59,7 +59,7 @@
     <div id="home-view" class="view active-view">
       <div class="hero">
         <h2>Start with APNA AI</h2>
-        <p>Your ultimate creative workspace for Chat, Free Images & Videos</p>
+        <p>Your ultimate creative workspace for Chat & Free Images</p>
         <button class="btn-main" onclick="switchView('chat-view')">Start Chatting →</button>
       </div>
 
@@ -72,10 +72,6 @@
           <h3>🖼️ Image Studio</h3>
           <p>Generate 100% Free AI Images instantly.</p>
         </div>
-        <div class="card" onclick="switchView('video-view')">
-          <h3>🎬 Video Studio</h3>
-          <p>Create cinematic prompts for AI Video.</p>
-        </div>
       </div>
     </div>
 
@@ -83,7 +79,7 @@
     <div id="chat-view" class="view">
       <button class="back-btn" onclick="switchView('home-view')">← Back to Home</button>
       <div class="chat-box" id="chatBox">
-        <div class="msg ai">Hello! Main APNA AI hoon. Aaj kya banana chahte hain?</div>
+        <div class="msg ai">Hello! Main APNA AI hoon. Kaise help kar sakta hoon aapki?</div>
       </div>
       <div class="input-area">
         <input type="text" id="userInput" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendMessage()">
@@ -91,29 +87,18 @@
       </div>
     </div>
 
-    <!-- 3. Image Studio View -->
+    <!-- 3. Image Studio View (Option A) -->
     <div id="image-view" class="view">
       <button class="back-btn" onclick="switchView('home-view')">← Back to Home</button>
       <div class="image-preview">
-        <div id="imageLoader" class="loader">✨ Generating your image, please wait...</div>
+        <div id="placeholderText" style="color:#94a3b8; font-size: 14px;">Type a prompt below to generate an image...</div>
+        <div id="imageLoader" class="loader">✨ Generating high quality AI image...</div>
         <img id="generatedImage" src="" alt="AI Generated Image">
         <a id="downloadBtn" class="download-btn" target="_blank" download="apna-ai-image.jpg">Download Image 📥</a>
       </div>
       <div class="input-area">
-        <input type="text" id="imagePrompt" placeholder="Describe the image you want (e.g. A futuristic cyberpunk city, 8k)...">
+        <input type="text" id="imagePrompt" placeholder="Describe your image (e.g., Ancient warrior girl with glowing sword, 8k)...">
         <button class="btn-send" onclick="generateImage()">Generate</button>
-      </div>
-    </div>
-
-    <!-- 4. Video Studio View -->
-    <div id="video-view" class="view">
-      <button class="back-btn" onclick="switchView('home-view')">← Back to Home</button>
-      <div class="chat-box" id="videoBox">
-        <div class="msg ai">🎬 Welcome to Video Studio! Write your scene idea here, and I will generate an ultra-detailed 8K prompt for Pixverse / Luma / Runway video platforms.</div>
-      </div>
-      <div class="input-area">
-        <input type="text" id="videoInput" placeholder="Describe video concept (e.g. Indian warrior battling a giant monster)..." onkeypress="if(event.key==='Enter') generateVideoPrompt()">
-        <button class="btn-send" onclick="generateVideoPrompt()">Create Prompt</button>
       </div>
     </div>
 
@@ -165,14 +150,15 @@
       const imgElement = document.getElementById('generatedImage');
       const loader = document.getElementById('imageLoader');
       const downloadBtn = document.getElementById('downloadBtn');
+      const placeholder = document.getElementById('placeholderText');
 
+      if(placeholder) placeholder.style.display = 'none';
       imgElement.style.display = 'none';
       downloadBtn.style.display = 'none';
       loader.style.display = 'block';
 
-      // Clean prompt for URL
       const encodedPrompt = encodeURIComponent(prompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
 
       const tempImg = new Image();
       tempImg.src = imageUrl;
@@ -183,38 +169,9 @@
         downloadBtn.href = imageUrl;
         downloadBtn.style.display = 'inline-block';
       };
-    }
-
-    // Video Prompt Logic
-    async function generateVideoPrompt() {
-      const input = document.getElementById('videoInput');
-      const text = input.value.trim();
-      if (!text) return;
-
-      const videoBox = document.getElementById('videoBox');
-      videoBox.innerHTML += `<div class="msg user">${text}</div>`;
-      input.value = '';
-
-      const aiMsg = document.createElement('div');
-      aiMsg.className = 'msg ai';
-      aiMsg.textContent = 'Crafting 8K cinematic video prompt...';
-      videoBox.appendChild(aiMsg);
-      videoBox.scrollTop = videoBox.scrollHeight;
-
-      const fullPrompt = `Act as an expert AI Video Prompt Generator. Create an extreme high-detail, 8K cinematic text-to-video prompt for Pixverse/Luma based on this idea: "${text}". Include camera movement, lighting, atmosphere, and render style.`;
-
-      try {
-        const response = await fetch('/.netlify/functions/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: fullPrompt })
-        });
-        const data = await response.json();
-        aiMsg.innerHTML = `${data.reply}<br><br><b>💡 Pro-Tip:</b> Copy this prompt and paste it into <b>Pixverse</b> or <b>Luma Dream Machine</b> for free video rendering!`;
-      } catch (err) {
-        aiMsg.textContent = "Error generating video prompt.";
-      }
-      videoBox.scrollTop = videoBox.scrollHeight;
+      tempImg.onerror = function() {
+        loader.textContent = "Failed to load image. Please try again.";
+      };
     }
   </script>
 </body>
