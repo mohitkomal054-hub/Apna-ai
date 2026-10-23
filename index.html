@@ -11,8 +11,12 @@
     h1 { font-size: 20px; color: #8b5cf6; }
     .container { flex: 1; display: flex; flex-direction: column; max-width: 800px; width: 100%; margin: 0 auto; padding: 20px; }
     
+    /* Navigation Views */
+    .view { display: none; flex-direction: column; height: 100%; }
+    .active-view { display: flex; }
+
     /* Home View */
-    #home-view { display: flex; flex-direction: column; gap: 20px; text-align: center; justify-content: center; height: 100%; }
+    #home-view { gap: 20px; text-align: center; justify-content: center; }
     .hero { background: linear-gradient(135deg, #1e1b4b, #31104b); padding: 30px; border-radius: 16px; border: 1px solid #3b2d54; }
     .hero h2 { font-size: 26px; margin-bottom: 10px; }
     .hero p { color: #a78bfa; font-size: 14px; margin-bottom: 20px; }
@@ -24,10 +28,9 @@
     .card h3 { font-size: 16px; margin-bottom: 5px; color: #e2e8f0; }
     .card p { font-size: 12px; color: #94a3b8; }
 
-    /* Chat View */
-    #chat-view { display: none; flex-direction: column; height: 100%; }
+    /* Chat & Tool Elements */
     .chat-box { flex: 1; overflow-y: auto; background: #131728; border: 1px solid #232942; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
-    .msg { max-width: 80%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
     .msg.user { background: #7c3aed; color: white; align-self: flex-end; }
     .msg.ai { background: #232942; color: #e2e8f0; align-self: flex-start; }
     
@@ -36,6 +39,12 @@
     input[type="text"]:focus { border-color: #7c3aed; }
     .btn-send { background: #7c3aed; border: none; color: white; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     .back-btn { background: transparent; border: 1px solid #3b2d54; color: #a78bfa; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-bottom: 10px; align-self: flex-start; }
+
+    /* Image Display Area */
+    .image-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; background: #131728; border: 1px solid #232942; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+    .image-preview img { max-width: 100%; max-height: 350px; border-radius: 8px; display: none; }
+    .loader { display: none; color: #a78bfa; font-size: 14px; }
+    .download-btn { display: none; margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -45,71 +54,88 @@
   </header>
 
   <div class="container">
-    <!-- Home View -->
-    <div id="home-view">
+    
+    <!-- 1. Home View -->
+    <div id="home-view" class="view active-view">
       <div class="hero">
         <h2>Start with APNA AI</h2>
-        <p>Your creative workspace powered by Gemini API</p>
-        <button class="btn-main" onclick="openChat()">Start Chatting →</button>
+        <p>Your ultimate creative workspace for Chat, Free Images & Videos</p>
+        <button class="btn-main" onclick="switchView('chat-view')">Start Chatting →</button>
       </div>
 
       <div class="grid">
-        <div class="card" onclick="openChat()">
+        <div class="card" onclick="switchView('chat-view')">
           <h3>💬 AI Chat</h3>
           <p>Brainstorm ideas & write prompts.</p>
         </div>
-        <div class="card" onclick="alert('Image Studio coming soon!')">
+        <div class="card" onclick="switchView('image-view')">
           <h3>🖼️ Image Studio</h3>
-          <p>Prepare prompts for AI images.</p>
+          <p>Generate 100% Free AI Images instantly.</p>
+        </div>
+        <div class="card" onclick="switchView('video-view')">
+          <h3>🎬 Video Studio</h3>
+          <p>Create cinematic prompts for AI Video.</p>
         </div>
       </div>
     </div>
 
-    <!-- Chat View -->
-    <div id="chat-view">
-      <button class="back-btn" onclick="openHome()">← Back to Home</button>
+    <!-- 2. Chat View -->
+    <div id="chat-view" class="view">
+      <button class="back-btn" onclick="switchView('home-view')">← Back to Home</button>
       <div class="chat-box" id="chatBox">
-        <div class="msg ai">Hello! Main APNA AI hoon. Kaise help kar sakta hoon aapki?</div>
+        <div class="msg ai">Hello! Main APNA AI hoon. Aaj kya banana chahte hain?</div>
       </div>
       <div class="input-area">
-        <input type="text" id="userInput" placeholder="Type your message here..." onkeypress="handleKey(event)">
+        <input type="text" id="userInput" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendMessage()">
         <button class="btn-send" onclick="sendMessage()">Send</button>
       </div>
     </div>
+
+    <!-- 3. Image Studio View -->
+    <div id="image-view" class="view">
+      <button class="back-btn" onclick="switchView('home-view')">← Back to Home</button>
+      <div class="image-preview">
+        <div id="imageLoader" class="loader">✨ Generating your image, please wait...</div>
+        <img id="generatedImage" src="" alt="AI Generated Image">
+        <a id="downloadBtn" class="download-btn" target="_blank" download="apna-ai-image.jpg">Download Image 📥</a>
+      </div>
+      <div class="input-area">
+        <input type="text" id="imagePrompt" placeholder="Describe the image you want (e.g. A futuristic cyberpunk city, 8k)...">
+        <button class="btn-send" onclick="generateImage()">Generate</button>
+      </div>
+    </div>
+
+    <!-- 4. Video Studio View -->
+    <div id="video-view" class="view">
+      <button class="back-btn" onclick="switchView('home-view')">← Back to Home</button>
+      <div class="chat-box" id="videoBox">
+        <div class="msg ai">🎬 Welcome to Video Studio! Write your scene idea here, and I will generate an ultra-detailed 8K prompt for Pixverse / Luma / Runway video platforms.</div>
+      </div>
+      <div class="input-area">
+        <input type="text" id="videoInput" placeholder="Describe video concept (e.g. Indian warrior battling a giant monster)..." onkeypress="if(event.key==='Enter') generateVideoPrompt()">
+        <button class="btn-send" onclick="generateVideoPrompt()">Create Prompt</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    function openChat() {
-      document.getElementById('home-view').style.display = 'none';
-      document.getElementById('chat-view').style.display = 'flex';
+    function switchView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active-view'));
+      document.getElementById(viewId).classList.add('active-view');
     }
 
-    function openHome() {
-      document.getElementById('chat-view').style.display = 'none';
-      document.getElementById('home-view').style.display = 'flex';
-    }
-
-    function handleKey(e) {
-      if (e.key === 'Enter') sendMessage();
-    }
-
+    // Chat Logic
     async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
       if (!text) return;
 
       const chatBox = document.getElementById('chatBox');
-
-      // Add user message
-      const userMsg = document.createElement('div');
-      userMsg.className = 'msg user';
-      userMsg.textContent = text;
-      chatBox.appendChild(userMsg);
-
+      chatBox.innerHTML += `<div class="msg user">${text}</div>`;
       input.value = '';
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // Add AI Loading Message
       const aiMsg = document.createElement('div');
       aiMsg.className = 'msg ai';
       aiMsg.textContent = 'Thinking...';
@@ -123,12 +149,72 @@
           body: JSON.stringify({ message: text })
         });
         const data = await response.json();
-        aiMsg.textContent = data.reply || "Sorry, response parse nahi ho paya.";
+        aiMsg.textContent = data.reply || "Response clear nahi mil paya.";
       } catch (err) {
-        aiMsg.textContent = "Error: Answer nahi mila. Key check karein.";
+        aiMsg.textContent = "Error: Key/Backend issue.";
       }
-
       chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Free Image Generation Logic (Pollinations AI)
+    function generateImage() {
+      const promptInput = document.getElementById('imagePrompt');
+      const prompt = promptInput.value.trim();
+      if (!prompt) return;
+
+      const imgElement = document.getElementById('generatedImage');
+      const loader = document.getElementById('imageLoader');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      imgElement.style.display = 'none';
+      downloadBtn.style.display = 'none';
+      loader.style.display = 'block';
+
+      // Clean prompt for URL
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000)}`;
+
+      const tempImg = new Image();
+      tempImg.src = imageUrl;
+      tempImg.onload = function() {
+        loader.style.display = 'none';
+        imgElement.src = imageUrl;
+        imgElement.style.display = 'block';
+        downloadBtn.href = imageUrl;
+        downloadBtn.style.display = 'inline-block';
+      };
+    }
+
+    // Video Prompt Logic
+    async function generateVideoPrompt() {
+      const input = document.getElementById('videoInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const videoBox = document.getElementById('videoBox');
+      videoBox.innerHTML += `<div class="msg user">${text}</div>`;
+      input.value = '';
+
+      const aiMsg = document.createElement('div');
+      aiMsg.className = 'msg ai';
+      aiMsg.textContent = 'Crafting 8K cinematic video prompt...';
+      videoBox.appendChild(aiMsg);
+      videoBox.scrollTop = videoBox.scrollHeight;
+
+      const fullPrompt = `Act as an expert AI Video Prompt Generator. Create an extreme high-detail, 8K cinematic text-to-video prompt for Pixverse/Luma based on this idea: "${text}". Include camera movement, lighting, atmosphere, and render style.`;
+
+      try {
+        const response = await fetch('/.netlify/functions/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: fullPrompt })
+        });
+        const data = await response.json();
+        aiMsg.innerHTML = `${data.reply}<br><br><b>💡 Pro-Tip:</b> Copy this prompt and paste it into <b>Pixverse</b> or <b>Luma Dream Machine</b> for free video rendering!`;
+      } catch (err) {
+        aiMsg.textContent = "Error generating video prompt.";
+      }
+      videoBox.scrollTop = videoBox.scrollHeight;
     }
   </script>
 </body>
